@@ -10,9 +10,9 @@ def get_listings_from_search_results(html_file):
     """
     Write a function that creates a BeautifulSoup object on html_file. Parse
     through the object and return a list of tuples containing:
-     a string of the title of the listing,
-     an int of the cost to rent for one night,
-     and a string of the listing id number
+     - a string of the title of the listing,
+     - an int of the cost to rent for one night,
+     - and a string of the listing id number
     in the format given below. Make sure to turn costs into ints.
 
     The listing id is found in the url of a listing. For example, for
@@ -25,7 +25,10 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    pass
+    soup = BeautifulSoup(html_file, 'html.parser')
+    
+
+
 
 
 def get_listing_information(listing_id):
