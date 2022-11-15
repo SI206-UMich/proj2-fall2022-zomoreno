@@ -25,44 +25,61 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    fh = open(html_file)
+    fh = open(html_file,'r')
     soup = BeautifulSoup(fh, 'html.parser')
     fh.close()
 
     listings = soup.find_all('div', 'class_= t1jojoys dir dir-ltr')
-    name_list = [name.text for name in listings]
+    # name_list = [name.text for name in listings]
 
     cost_per_night = soup.find_all('span', class_ = '_tyxjp1')
-    cost_list_string = [cost.text for cost in cost_per_night]
-
-    cost_list = []
-    for cost in cost_list_string:
-        cost_int = cost.strip("$ ")
-        cost_list.append(int(cost_int))
+    # cost_list_string = [cost.text for cost in cost_per_night]
 
     list_ids = soup.find_all('a', class_ = "ln2bl2p dir dir-ltr")
-    id_list = []
-
-    for x in list_ids:
-        link = x.get('href', None)
-        reg_ex = r'\w.(\d+\d)\?'
-        tags = re.findall(reg_ex, link)
-        id_list.extend(tags)
-
-    info_list = []
-    for i in range(len(listings)):
-        info = (name_list[i], cost_list[i], id_list[i])
-        info_list.append(info)
-
-    return info_list
 
 
+    listingTitle = []
+    for a in listings:
+        listingTitle.append(a.text)
 
+    cost_list = []
+    for cost in cost_per_night:
+        x = cost.text.lstrip('$')
+        cost_list.append(int(x))
 
+    listingID = []
+    for listing in list_ids:
+        x = listing['target'].split('_')[1]
+        listingID.append(x)
 
+    bnbresults = []
+    for h in range(len(listingTitle)):
+        tup = (listingTitle[h], cost_list[h],listingID[h])
+        bnbresults.append(tup)
 
+    return bnbresults
 
+    # cost_list = []
+    # for cost in cost_list_string:
+    #     cost_int = cost.strip("$ ")
+    #     cost_list.append(int(cost_int))
 
+    # list_ids = soup.find_all('a', class_ = "ln2bl2p dir dir-ltr")
+
+    # id_list = []
+
+    # for x in list_ids:
+    #     link = x.get('href', None)
+    #     reg_ex = r'\w.(\d+\d)\?'
+    #     tags = re.findall(reg_ex, link)
+    #     id_list.extend(tags)
+
+    # info_list = []
+    # for i in range(len(listings)):
+    #     info = (name_list[i], cost_list[i], id_list[i])
+    #     info_list.append(info)
+
+    # return info_list
 
 
 
@@ -90,8 +107,44 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
-    pass
+    # policy number is 3 different categories: this could be a policy number, or the word
+    #        "pending" or "exempt" or many others
+    html_file = f'html_files/listing_{listing_id}.html'
+    fp = open(html_file, 'r', encoding='utf-8')
+    soup = BeautifulSoup(fp, 'html.parser')
+    fp.close()
 
+    policy_num = soup.find(
+        "ul", {"class": "fhhmddr dir dir-ltr"}).find("li").text
+    if "pending" in policy_num.lower():
+        policy_num = "Pending"
+    elif 'exempt' in policy_num.lower() or 'not needed' in policy_num.lower():
+        policy_num = "Exempt"
+    else:
+        policy_num = policy_num.split()[2]
+    heading = soup.find('div', {"class": "_tqmy57"})
+
+    # for place type:  "Private Room": the listing subtitle has the word "private" in it
+    #            "Shared Room": the listing subtitle has the word "shared" in it
+    #           "Entire Room": the listing subtitle has neither the word "private" nor "shared" in it
+    sub_title = heading.find("h2").text
+    if "private" in sub_title.lower():
+        place_type = "Private Room"
+    elif "shared" in sub_title.lower():
+        place_type = "Shared Room"
+    else:
+        place_type = "Entire Room"
+
+    # int = number of bedrooms (so would grab from )
+
+    spans = heading.find_all("span")
+    for span in spans:
+        text = span.text
+        if 'bedroom' in text.lower() or 'bed' in text.lower():
+            bedroom = int(text.split()[0])
+            break
+    listing_information = (policy_num, place_type,bedroom)
+    return listing_information
 
 def get_detailed_listing_database(html_file):
     """
@@ -107,7 +160,14 @@ def get_detailed_listing_database(html_file):
         ...
     ]
     """
-    pass
+    listing_database = []
+    listing = get_listings_from_search_results(html_file)
+    for x in listing:
+        listing_info = get_listing_information(x[2])
+        record = x + listing_info
+        listing_database.append(record)
+
+    return listing_database
 
 
 def write_csv(data, filename):
@@ -132,8 +192,13 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    pass
-
+    sorted_data = sorted(
+        data, key = lambda t: t[1])
+    out = open(filename, 'w', newline = '')
+    csv_out = csv.writer(out)
+    csv_out.writerow(["Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms"])
+    csv_out.writerow(sorted_data)
+    out.close()
 
 def check_policy_numbers(data):
     """
@@ -154,7 +219,16 @@ def check_policy_numbers(data):
     ]
 
     """
-    pass
+    listing_ids = []
+    for x in data:
+        policy_num = x[3]
+        if policy_num == 'Pending' or policy_num == 'Exempt':
+            continue
+        matched = re.findall(
+            '20[09][0-9]-00[0-9][0-9][0-9][0-9]STR|STR-000[0-9][0-9][0-9][0-9]', policy_num)
+        if len(matched) == 0:
+            listing_ids.append(x[2])
+        return listing_ids
 
 
 def extra_credit(listing_id):
@@ -179,7 +253,8 @@ class TestCases(unittest.TestCase):
     def test_get_listings_from_search_results(self):
         # call get_listings_from_search_results("html_files/mission_district_search_results.html")
         # and save to a local variable
-        listings = get_listings_from_search_results("html_files/mission_district_search_results.html")
+        listings = get_listings_from_search_results("\
+            html_files/mission_district_search_results.html")
         # check that the number of listings extracted is correct (20 listings)
         self.assertEqual(len(listings), 20)
         # check that the variable you saved after calling the function is a list
@@ -189,7 +264,7 @@ class TestCases(unittest.TestCase):
         # check that the first title, cost, and listing id tuple is correct (open the search results html and find it)
 
         # check that the last title is correct (open the search results html and find it)
-        pass
+         
 
     def test_get_listing_information(self):
         html_list = ["1623609",
@@ -217,7 +292,7 @@ class TestCases(unittest.TestCase):
 
         # check that the third listing has one bedroom
 
-        pass
+        
 
     def test_get_detailed_listing_database(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
@@ -236,7 +311,7 @@ class TestCases(unittest.TestCase):
         # check that the last tuple is made up of the following:
         # 'Guest suite in Mission District', 238, '32871760', 'STR-0004707', 'Entire Room', 1
 
-        pass
+        
 
     def test_write_csv(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
@@ -258,7 +333,7 @@ class TestCases(unittest.TestCase):
 
         # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
 
-        pass
+        
 
     def test_check_policy_numbers(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
@@ -273,7 +348,7 @@ class TestCases(unittest.TestCase):
         # check that the element in the list is a string
 
         # check that the first element in the list is '16204265'
-        pass
+        
 
 
 if __name__ == '__main__':
