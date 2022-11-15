@@ -30,6 +30,7 @@ def get_listings_from_search_results(html_file):
     fh.close()
 
     listings = soup.find_all('div', 'class_= t1jojoys dir dir-ltr')
+    print(listings)
     # name_list = [name.text for name in listings]
 
     cost_per_night = soup.find_all('span', class_ = '_tyxjp1')
