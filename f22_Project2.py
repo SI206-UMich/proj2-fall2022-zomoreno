@@ -30,19 +30,16 @@ def get_listings_from_search_results(html_file):
     # full_path = os.path.join(source_dir, html_file)
     f = open(html_file, 'r')
     file_data = f.read()
-    f.close()
     soup = BeautifulSoup(file_data, 'html.parser')
+    f.close()
     
-
     listings = soup.find_all('div', 'class_= t1jojoys dir dir-ltr')
-    print(listings)
     # name_list = [name.text for name in listings]
 
     cost_per_night = soup.find_all('span', class_ = '_tyxjp1')
     # cost_list_string = [cost.text for cost in cost_per_night]
 
     list_ids = soup.find_all('a', class_ = "ln2bl2p dir dir-ltr")
-
 
     listingTitle = []
     for a in listings:
@@ -65,27 +62,6 @@ def get_listings_from_search_results(html_file):
 
     return bnbresults
 
-    # cost_list = []
-    # for cost in cost_list_string:
-    #     cost_int = cost.strip("$ ")
-    #     cost_list.append(int(cost_int))
-
-    # list_ids = soup.find_all('a', class_ = "ln2bl2p dir dir-ltr")
-
-    # id_list = []
-
-    # for x in list_ids:
-    #     link = x.get('href', None)
-    #     reg_ex = r'\w.(\d+\d)\?'
-    #     tags = re.findall(reg_ex, link)
-    #     id_list.extend(tags)
-
-    # info_list = []
-    # for i in range(len(listings)):
-    #     info = (name_list[i], cost_list[i], id_list[i])
-    #     info_list.append(info)
-
-    # return info_list
 
 
 
@@ -150,7 +126,7 @@ def get_listing_information(listing_id):
             bedroom = int(text.split()[0])
             break
     listing_information = (policy_num, place_type,bedroom)
-    print(listing_information)
+    return listing_information
 
 def get_detailed_listing_database(html_file):
     """
