@@ -1,3 +1,4 @@
+from email import header
 from xml.sax import parseString
 from bs4 import BeautifulSoup
 import re
@@ -25,9 +26,13 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    fh = open(html_file,'r')
-    soup = BeautifulSoup(fh, 'html.parser')
-    fh.close()
+    # source_dir = os.path.dirname(__file__)
+    # full_path = os.path.join(source_dir, html_file)
+    f = open(html_file, 'r')
+    file_data = f.read()
+    f.close()
+    soup = BeautifulSoup(file_data, 'html.parser')
+    
 
     listings = soup.find_all('div', 'class_= t1jojoys dir dir-ltr')
     print(listings)
@@ -145,12 +150,12 @@ def get_listing_information(listing_id):
             bedroom = int(text.split()[0])
             break
     listing_information = (policy_num, place_type,bedroom)
-    return listing_information
+    print(listing_information)
 
 def get_detailed_listing_database(html_file):
     """
     Write a function that calls the above two functions in order to return
-    the complete listing information using the functions you’ve created.
+    the complete listing information using the functions youve created.
     This function takes in a variable representing the location of the search results html file.
     The return value should be in this format:
 
@@ -193,8 +198,7 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    sorted_data = sorted(
-        data, key = lambda t: t[1])
+    sorted_data = sorted(data, key = lambda t: t[1])
     out = open(filename, 'w', newline = '')
     csv_out = csv.writer(out)
     csv_out.writerow(["Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms"])
@@ -225,11 +229,10 @@ def check_policy_numbers(data):
         policy_num = x[3]
         if policy_num == 'Pending' or policy_num == 'Exempt':
             continue
-        matched = re.findall(
-            '20[09][0-9]-00[0-9][0-9][0-9][0-9]STR|STR-000[0-9][0-9][0-9][0-9]', policy_num)
+        matched = re.findall('20[09][0-9]-00[0-9][0-9][0-9][0-9]STR|STR-000[0-9][0-9][0-9][0-9]', policy_num)
         if len(matched) == 0:
             listing_ids.append(x[2])
-        return listing_ids
+    return listing_ids
 
 
 def extra_credit(listing_id):
@@ -254,8 +257,7 @@ class TestCases(unittest.TestCase):
     def test_get_listings_from_search_results(self):
         # call get_listings_from_search_results("html_files/mission_district_search_results.html")
         # and save to a local variable
-        listings = get_listings_from_search_results("\
-            html_files/mission_district_search_results.html")
+        listings = get_listings_from_search_results("html_files/mission_district_search_results.html")
         # check that the number of listings extracted is correct (20 listings)
         self.assertEqual(len(listings), 20)
         # check that the variable you saved after calling the function is a list
